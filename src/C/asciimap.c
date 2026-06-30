@@ -44,5 +44,10 @@ void xytozmap(struct zstreamelem zstream[], int znummax,
         return; /* array zstream full */
       zstream[i++] = (*findz)(*xi, *yi);
     }
+    /* add newline after finishing one
+     * row of y's */
+    zstream[i++] = { NEWLINE, { '\n' } };   
   }
+  /* replace last newline by end */
+  zstream[--i] = { END, { '\0' } };
 }
