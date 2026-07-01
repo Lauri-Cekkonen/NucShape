@@ -25,7 +25,7 @@ struct zstreamelem {
 typedef struct {
   struct zstreamelem min;
   struct zstreamelem max;
-} MinMaxPair;
+} Minmaxpair;
 
 /* Return:
  *  < 0 if elem1 < elem2
@@ -45,7 +45,7 @@ int elemcmp(struct zstreamelem elem1,
         case SOL:
           if (elem1.content.height < elem2.content.height)
             return -1;
-          if (elem1.content.height > elem2.content.height)
+          else if (elem1.content.height > elem2.content.height)
             return 1;
           return 0; 
         default:
@@ -72,18 +72,25 @@ int elemcmp(struct zstreamelem elem1,
  * are stored in array zstream (side effect). 
  * Maximum amount of elements in zstream is
  * znummax.*/
-void xytozmap(struct zstreamelem zstream[], int znummax,
+Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
               double *xmin, double *xmax,
               double *ymin, double *ymax,
               struct zstreamelem (*findz)(double, double)) {
   int i = 0;
   double *xi, *yi;
+  Minmaxpair zminmax = {{NOSOL, {' '}}, {NOSOL, {' '}}}; 
   
   for (xi = xmin; xi <= xmax; xi++) {
     for (yi = ymin; yi <= ymin; yi++) {
       if (i >= znummax)
-        return; /* array zstream full */
-      zstream[i++] = (*findz)(*xi, *yi);
+        return zminmax; /* array zstream full */
+      
+      newelem = (*findz)(*xi, *yi);
+      if (elemcmp(newelem, zminmax.min) < 0)
+        zminmax.min = newelem; /* new minimum */
+      if (elemcmp(newelem, zminmax.max) > 0)
+        zminmax.max = newelem; /* new maximum */
+      zstream[i++] = newelem;
     }
     /* add newline after finishing one
      * row of y's */
@@ -91,8 +98,9 @@ void xytozmap(struct zstreamelem zstream[], int znummax,
     zstream[i].content.c = '\n';
     i++;
   }
-  /* replace last newline by end */
+  /* replace last newline by end marker */
   --i;
   zstream[i].tag = END;
   zstream[i].content.c = '\0';
+  return zminmax;
 }
