@@ -13,7 +13,7 @@ enum zstreamtag {
 
 /* z-value stream element */
 struct zstreamelem {
-  zstreamtag tag;
+  enum zstreamtag tag;
   union {
     double height; /*      for SOL */
     char   c;      /* ' '  for NOSOL,
@@ -39,9 +39,9 @@ typedef struct {
  * are equivalent. */
 int elemcmp(struct zstreamelem elem1,
             struct zstreamelem elem2) {
-  switch (elem1.zstreamtag) {
+  switch (elem1.tag) {
     case SOL:
-      switch (elem2.zstreamtag) {
+      switch (elem2.tag) {
         case SOL:
           if (elem1.content.height < elem2.content.height)
             return -1;
@@ -52,7 +52,7 @@ int elemcmp(struct zstreamelem elem1,
           return 1;
       }
     default:
-      switch (elem2.zstreamtag) {
+      switch (elem2.tag) {
         case SOL:
           return -1;
         default:
@@ -72,14 +72,13 @@ int elemcmp(struct zstreamelem elem1,
  * are stored in array zstream (side effect). 
  * Maximum amount of elements in zstream is
  * znummax.*/
-MinMaxPair xytozmap(struct zstreamelem zstream[], int znummax,
+void xytozmap(struct zstreamelem zstream[], int znummax,
               double *xmin, double *xmax,
               double *ymin, double *ymax,
               struct zstreamelem (*findz)(double, double)) {
   int i = 0;
   double *xi, *yi;
-  MinMaxPair 
-
+  
   for (xi = xmin; xi <= xmax; xi++) {
     for (yi = ymin; yi <= ymin; yi++) {
       if (i >= znummax)
@@ -88,8 +87,12 @@ MinMaxPair xytozmap(struct zstreamelem zstream[], int znummax,
     }
     /* add newline after finishing one
      * row of y's */
-    zstream[i++] = { NEWLINE, { '\n' } };   
+    zstream[i].tag = NEWLINE;
+    zstream[i].content.c = '\n';
+    i++;
   }
   /* replace last newline by end */
-  zstream[--i] = { END, { '\0' } };
+  --i;
+  zstream[i].tag = END;
+  zstream[i].content.c = '\0';
 }
