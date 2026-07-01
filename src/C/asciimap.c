@@ -27,6 +27,36 @@ typedef struct {
   struct zstreamelem max;
 } Minmaxpair;
 
+#define XMIN -1.0
+#define XMAX 1.0
+#define XNUM 30
+#define YMIN -1.0
+#define YMAX 1.0
+#define YNUM 30
+#define MAXGRID 5000
+
+main() {
+  double xvals[XNUM];
+  double yvals[YNUM];
+  struct zstreamelem zvals[MAXGRID];
+  
+  arrcreate(xvals, XNUM, XMIN, XMAX);
+  arrcreate(yvals, YNUM, YMIN, YMAX);
+}
+
+/* Makes input double array arr into form
+ * [min, min+d, min+2*d, ..., max]
+ * with equal spacing
+ * d = (max-min)/len. */
+void arrcreate(double arr[], int len,
+               double min, double max) {
+  int i;
+  double d = (max-min)/((double)len);
+  arr[0] = min;
+  for (i = 1; i < len; i++)
+    arr[i] = arr[i-1] + d;
+}
+
 /* Return:
  *  < 0 if elem1 < elem2
  *  = 0 if elem1 = elem2
@@ -71,7 +101,9 @@ int elemcmp(struct zstreamelem elem1,
  * Structs zstreamelem returned by findz
  * are stored in array zstream (side effect). 
  * Maximum amount of elements in zstream is
- * znummax.*/
+ * znummax.
+ * RETURN: Minmaxpair struct containing the
+ * minimum and maximum element of zstream.*/
 Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
               double *xmin, double *xmax,
               double *ymin, double *ymax,
