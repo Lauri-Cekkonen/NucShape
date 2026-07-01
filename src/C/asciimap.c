@@ -22,6 +22,10 @@ struct zstreamelem {
   } content;
 };
 
+/* Contains 2 zstreamelem structs with
+ * zstreamtag=SOL and their heights
+ * correspond to minimum and maximum
+ * z-value. */
 typedef struct {
   struct zstreamelem min;
   struct zstreamelem max;
@@ -56,42 +60,6 @@ void arrcreate(double arr[], int len,
   for (i = 1; i < len; i++)
     arr[i] = arr[i-1] + d;
 }
-
-/* Return:
- *  < 0 if elem1 < elem2
- *  = 0 if elem1 = elem2
- *  > 0 if elem1 > elem2
- * If both elements have zstreamtag = SOL,
- * the one with greater height is greater.
- * If one element is SOL and the other one
- * not, the SOL element is greater.
- * Elements with other zstreamtag than SOL
- * are equivalent. */
-int elemcmp(struct zstreamelem elem1,
-            struct zstreamelem elem2) {
-  switch (elem1.tag) {
-    case SOL:
-      switch (elem2.tag) {
-        case SOL:
-          if (elem1.content.height < elem2.content.height)
-            return -1;
-          else if (elem1.content.height > elem2.content.height)
-            return 1;
-          return 0; 
-        default:
-          return 1;
-      }
-    default:
-      switch (elem2.tag) {
-        case SOL:
-          return -1;
-        default:
-          return 0;
-      }
-  }
-}
-
-
 
 /* Use function findz to map points (x, y)
  * where x comes from array 
@@ -135,4 +103,45 @@ Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
   zstream[i].tag = END;
   zstream[i].content.c = '\0';
   return zminmax;
+}
+
+/* Return:
+ *  < 0 if elem1 < elem2
+ *  = 0 if elem1 = elem2
+ *  > 0 if elem1 > elem2
+ * If both elements have zstreamtag = SOL,
+ * the one with greater height is greater.
+ * If one element is SOL and the other one
+ * not, the SOL element is greater.
+ * Elements with other zstreamtag than SOL
+ * are equivalent. */
+int elemcmp(struct zstreamelem elem1,
+            struct zstreamelem elem2) {
+  switch (elem1.tag) {
+    case SOL:
+      switch (elem2.tag) {
+        case SOL:
+          if (elem1.content.height < elem2.content.height)
+            return -1;
+          else if (elem1.content.height > elem2.content.height)
+            return 1;
+          return 0; 
+        default:
+          return 1;
+      }
+    default:
+      switch (elem2.tag) {
+        case SOL:
+          return -1;
+        default:
+          return 0;
+      }
+  }
+}
+
+struct zstreamelem zfinder(double x, double y,
+    double *thetamin, double *thetamax,
+    struct zstreamelem (*numsolver)(double, double, 
+      double (*)(double))
+    double (*spherfunc)(double, double)) {
 }
