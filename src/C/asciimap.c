@@ -139,9 +139,50 @@ int elemcmp(struct zstreamelem elem1,
   }
 }
 
+/* return type of function from double to
+ * double -> double */
+typedef double (*Curriedfunc)(double);
+
+/* First, calculate the phi-coordinate in spherical
+ * coordinates of a point given by the cartesian
+ * coordinates x and y. Then calculate the 
+ * theta-coordinate at that phi-value where function
+ * theta->spherfunc(theta, phi)
+ * has its root (zero value). Calculating the
+ * theta-value is done using a 1D numerical root 
+ * finder numsolver which returns zstreamelem of
+ * the form
+ *  - { SOL, { theta-value } } if solution exists or
+ *  - some other zstreamelem otherwise.
+ * In case a solution exists, a cartesian z-coordinate
+ * value corresponding to theta-value above point
+ * (x, y) is calculated and
+ *  - { SOL, { z-value} } is returned.
+ * Otherwise
+ *  - { NOSOL, { ' ' } } is returned. */
 struct zstreamelem zfinder(double x, double y,
     double *thetamin, double *thetamax,
-    struct zstreamelem (*numsolver)(double, double, 
-      double (*)(double))
-    double (*spherfunc)(double, double)) {
+    struct zstreamelem (*numsolver)(double *, double *, 
+      double (*)(double), double), double precision,
+    Curriedfunc (*spherfunc)(double)) {
+  struct streamelem theta;
+  double phi;
+
+  /* calculate phi using radius r in xy-plane */
+  double r = sqrt(pow(x,2) + pow(y,2));
+  double cosphi = x/r;
+  phi = y/fabs(y) * acos(cosphi);
+
+  /* calculate theta and corresponding height z */
+  theta = numsolver(thetamin, thetamax, 
+      spherfunc(phi), precision);
+  switch (theta.tag) {
+    case SOL:
+      /* solution exists -> can calculate z */
+      theta.content.height = r * cos(theta.content.height);
+      return theta;
+    default:
+      /* no solution */
+      return { NOSOL, { ' ' } };
+  }
 }
