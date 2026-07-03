@@ -22,6 +22,35 @@ struct zstreamelem {
   } content;
 };
 
+/* Generates z-value stream element elem with 
+ *  - elem.tag=NOSOL, if input tag=NOSOL
+ *  - ........=NEWLINE,...........=NEWLINE
+ *  - ........=END,...............=END.
+ * elem.content.c is set accordingly.
+ * elem.content.c='e' is set if any other
+ * zstreamtag is input. */
+struct zstreamelem contentcgen(enum zstreamtag tag) {
+  struct zstreamelem elem;
+  elem.tag = tag;
+  switch (tag) {
+    case NOSOL:
+      elem.content.c = ' ';
+      break;
+    case NEWLINE:
+      elem.content.c = '\n';
+      break;
+    case END:
+      elem.content.c = '\0';
+      break;
+    default:
+      fprintf(stderr, "contentcgen does not accept "
+          "%d as input", (int)tag);
+      elem.content.c = 'e'; /* marks error */
+      break;
+  }
+  return elem;
+}
+
 /* Contains 2 zstreamelem structs with
  * zstreamtag=SOL and their heights
  * correspond to minimum and maximum
@@ -63,27 +92,51 @@ void arrcreate(double arr[], int len,
 
 /* Use function findz to map points (x, y)
  * where x comes from array 
- * [*xmin, *(xmin+1), ..., *xmax]
+ *   [*xmin, *(xmin+1), ..., *xmax]
  * and y comes from array
- * [*ymin, *(ymin+1), ..., *ymax].
+ *   [*ymin, *(ymin+1), ..., *ymax].
  * Structs zstreamelem returned by findz
  * are stored in array zstream (side effect). 
+ * 
  * Maximum amount of elements in zstream is
- * znummax.
+ * znummax which is assume to be at least 
+ * one (PRECONDITION!):
+ *   znummax >= 1
+ * Note that after every row of 
+ * y's, a newline is added, so if
+ *  - [*xmin, ..., *xmax] = [1, 2, 3],
+ *  - [*ymin, ..., *ymax] = [1, 2, 3, 4, 5]
+ *    and
+ *  - znummax = 8,
+ * the zstream has form
+ *   [*, *, *, *, *, |, *, \]
+ * where
+ *  - *.tag = SOL or NOSOL,
+ *  - |.tag = NEWLINE and
+ *  - \.tag = END.
+ * Hence from the (x,y)-grid
+ *   [[(1,1), (1,2), (1,3), (1,4), (1,5)]
+ *    [(2,1), (2,2), (2,3), (2,4), (2,5)]
+ *    [(3,1), (3,2), (3,3), (3,4), (3,5)]],
+ * only the first row and first element on
+ * the second row get mapped by findz.
+ *
  * RETURN: Minmaxpair struct containing the
- * minimum and maximum element of zstream.*/
+ * minimum and maximum element of zstream. */
 Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
-              double *xmin, double *xmax,
-              double *ymin, double *ymax,
-              struct zstreamelem (*findz)(double, double)) {
-  int i = 0;
+    double *xmin, double *xmax,
+    double *ymin, double *ymax,
+    struct zstreamelem (*findz)(double, double)) {
+  int i;
   double *xi, *yi;
-  Minmaxpair zminmax = {{NOSOL, {' '}}, {NOSOL, {' '}}}; 
+  struct zstreamelem newelem;
+  Minmaxpair zminmax = {contentcgen(NOSOL), contentcgen(NOSOL)}; 
   
+  i = 0;
   for (xi = xmin; xi <= xmax; xi++) {
-    for (yi = ymin; yi <= ymin; yi++) {
-      if (i >= znummax)
-        return zminmax; /* array zstream full */
+    for (yi = ymin; yi <= ymax; yi++) {
+      if (i >= znummax-1)
+        break; /* array zstream full */
       
       newelem = (*findz)(*xi, *yi);
       if (elemcmp(newelem, zminmax.min) < 0)
@@ -92,16 +145,15 @@ Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
         zminmax.max = newelem; /* new maximum */
       zstream[i++] = newelem;
     }
+    if (i >= znummax-1)
+      break; /* array zstream full */
+
     /* add newline after finishing one
-     * row of y's */
-    zstream[i].tag = NEWLINE;
-    zstream[i].content.c = '\n';
-    i++;
+     * row of y's, if space left */
+    zstream[i++] = contentcgen(NEWLINE);
   }
-  /* replace last newline by end marker */
-  --i;
-  zstream[i].tag = END;
-  zstream[i].content.c = '\0';
+  /* add end marker to very end */
+  zstream[i] = contentcgen(END);
   return zminmax;
 }
 
@@ -166,11 +218,11 @@ struct zstreamelem zfinder(double x, double y,
       double (*)(double), double), double precision,
     Curriedfunc (*spherfunc)(double)) {
   struct streamelem theta;
-  double phi;
+  double phi, r, cosphi;
 
   /* calculate phi using radius r in xy-plane */
-  double r = sqrt(pow(x,2) + pow(y,2));
-  double cosphi = x/r;
+  r = sqrt(pow(x,2) + pow(y,2));
+  cosphi = x/r;
   phi = y/fabs(y) * acos(cosphi);
 
   /* calculate theta and corresponding height z */
@@ -183,6 +235,6 @@ struct zstreamelem zfinder(double x, double y,
       return theta;
     default:
       /* no solution */
-      return { NOSOL, { ' ' } };
+      return contentcgen(NOSOL);
   }
 }
