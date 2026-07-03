@@ -1,55 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-
-/* possible tags of the elements
- * in a z-value stream */ 
-enum zstreamtag {
-  SOL     = 01, /* solution exists */
-  NOSOL   = 02, /* solution does not exist */
-  NEWLINE = 04, /* newline when stream converted
-                   to string and printed */
-  END     = 010 /* end of stream */
-};
-
-/* z-value stream element */
-struct zstreamelem {
-  enum zstreamtag tag;
-  union {
-    double height; /*      for SOL */
-    char   c;      /* ' '  for NOSOL,
-                      '\n' for NEWLINE,
-                      '\0' for END */
-  } content;
-};
-
-/* Generates z-value stream element elem with 
- *  - elem.tag=NOSOL, if input tag=NOSOL
- *  - ........=NEWLINE,...........=NEWLINE
- *  - ........=END,...............=END.
- * elem.content.c is set accordingly.
- * elem.content.c='e' is set if any other
- * zstreamtag is input. */
-struct zstreamelem contentcgen(enum zstreamtag tag) {
-  struct zstreamelem elem;
-  elem.tag = tag;
-  switch (tag) {
-    case NOSOL:
-      elem.content.c = ' ';
-      break;
-    case NEWLINE:
-      elem.content.c = '\n';
-      break;
-    case END:
-      elem.content.c = '\0';
-      break;
-    default:
-      fprintf(stderr, "contentcgen does not accept "
-          "%d as input", (int)tag);
-      elem.content.c = 'e'; /* marks error */
-      break;
-  }
-  return elem;
-}
+#include "zstream.h"
 
 /* Contains 2 zstreamelem structs with
  * zstreamtag=SOL and their heights
@@ -130,7 +81,7 @@ Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
   int i;
   double *xi, *yi;
   struct zstreamelem newelem;
-  Minmaxpair zminmax = {contentcgen(NOSOL), contentcgen(NOSOL)}; 
+  Minmaxpair zminmax = {tagtoelem(NOSOL), tagtoelem(NOSOL)}; 
   
   i = 0;
   for (xi = xmin; xi <= xmax; xi++) {
@@ -150,10 +101,10 @@ Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
 
     /* add newline after finishing one
      * row of y's, if space left */
-    zstream[i++] = contentcgen(NEWLINE);
+    zstream[i++] = tagtoelem(NEWLINE);
   }
   /* add end marker to very end */
-  zstream[i] = contentcgen(END);
+  zstream[i] = tagtoelem(END);
   return zminmax;
 }
 
@@ -202,7 +153,7 @@ typedef double (*Curriedfunc)(double);
  * theta->spherfunc(theta, phi)
  * has its root (zero value). Calculating the
  * theta-value is done using a 1D numerical root 
- * finder numsolver which returns zstreamelem of
+ * finder (rootfinder) which returns zstreamelem of
  * the form
  *  - { SOL, { theta-value } } if solution exists or
  *  - some other zstreamelem otherwise.
@@ -214,7 +165,7 @@ typedef double (*Curriedfunc)(double);
  *  - { NOSOL, { ' ' } } is returned. */
 struct zstreamelem zfinder(double x, double y,
     double *thetamin, double *thetamax,
-    struct zstreamelem (*numsolver)(double *, double *, 
+    struct zstreamelem (*rootfinder)(double *, double *, 
       double (*)(double), double), double precision,
     Curriedfunc (*spherfunc)(double)) {
   struct streamelem theta;
@@ -226,7 +177,7 @@ struct zstreamelem zfinder(double x, double y,
   phi = y/fabs(y) * acos(cosphi);
 
   /* calculate theta and corresponding height z */
-  theta = numsolver(thetamin, thetamax, 
+  theta = rootfinder(thetamin, thetamax, 
       spherfunc(phi), precision);
   switch (theta.tag) {
     case SOL:
@@ -235,6 +186,6 @@ struct zstreamelem zfinder(double x, double y,
       return theta;
     default:
       /* no solution */
-      return contentcgen(NOSOL);
+      return tagtoelem(NOSOL);
   }
 }
