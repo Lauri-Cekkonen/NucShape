@@ -2,15 +2,6 @@
 #include <math.h>
 #include "zstream.h"
 
-/* Contains 2 zstreamelem structs with
- * zstreamtag=SOL and their heights
- * correspond to minimum and maximum
- * z-value. */
-typedef struct {
-  struct zstreamelem min;
-  struct zstreamelem max;
-} Minmaxpair;
-
 #define XMIN -1.0
 #define XMAX 1.0
 #define XNUM 30
@@ -36,33 +27,55 @@ void arrcreate(double arr[], int len,
                double min, double max) {
   int i;
   double d = (max-min)/((double)len);
+  
   arr[0] = min;
-  for (i = 1; i < len; i++)
-    arr[i] = arr[i-1] + d;
+  i = 0;
+  while (i < len)
+    arr[i++] += d;
 }
 
-/* Use function findz to map points (x, y)
- * where x comes from array 
+/* Use function findz to map all points 
+ * (x,y) where x comes from array 
  *   [*xmin, *(xmin+1), ..., *xmax]
  * and y comes from array
  *   [*ymin, *(ymin+1), ..., *ymax].
- * Structs zstreamelem returned by findz
- * are stored in array zstream (side effect). 
+ * Each (x,y) is mapped by findz to an
+ * zstreamelem struct which has
+ *  - .tag=SOL if z-value was found by
+ *    findz (solution exists)
+ *  - .tag=EMPTY if no fitting
+ *    z-value was found (no solution).
+ * In any case, the return value of
+ * findz is inserted into the array
+ * pointed by zstream until the end
+ * of the array is reached (side effect).
+ *
+ * NOTE: Because the pointer zstream has
+ * type Zstreamptr, the array it points
+ * to ends with and zstreamelem of the form
+ *   { END, { '\0' } }.
  * 
- * Maximum amount of elements in zstream is
- * znummax which is assume to be at least 
- * one (PRECONDITION!):
- *   znummax >= 1
- * Note that after every row of 
- * y's, a newline is added, so if
+ * NOTE: A streamelem struct of the form
+ *   { NEWLINE, { '\n' } }
+ * is added to zstream array after each
+ * row of y's (see the example below).
+ *
+ * For each z-value found by findz, it is
+ * tested if it's smaller than the z-value
+ * corresponding to *zmin or greater than
+ * the z-value corresponding ot *zmin.
+ * If yes, the *zmin or *zmax is replaced
+ * by the zstreamelem object returned by
+ * findz accordingly (side effect). 
+ *
+ * EXAMPLE: If
  *  - [*xmin, ..., *xmax] = [1, 2, 3],
  *  - [*ymin, ..., *ymax] = [1, 2, 3, 4, 5]
- *    and
- *  - znummax = 8,
- * the zstream has form
+ * and the array pointed by zstream has 8
+ * elements, the zstream is modified to form
  *   [*, *, *, *, *, |, *, \]
  * where
- *  - *.tag = SOL or NOSOL,
+ *  - *.tag = SOL or EMPTY,
  *  - |.tag = NEWLINE and
  *  - \.tag = END.
  * Hence from the (x,y)-grid
@@ -70,42 +83,39 @@ void arrcreate(double arr[], int len,
  *    [(2,1), (2,2), (2,3), (2,4), (2,5)]
  *    [(3,1), (3,2), (3,3), (3,4), (3,5)]],
  * only the first row and first element on
- * the second row get mapped by findz.
- *
- * RETURN: Minmaxpair struct containing the
- * minimum and maximum element of zstream. */
-Minmaxpair xytozmap(struct zstreamelem zstream[], int znummax,
+ * the second row get mapped by findz. */
+void xytozmap(Zstreamptr zstream,
     double *xmin, double *xmax,
     double *ymin, double *ymax,
-    struct zstreamelem (*findz)(double, double)) {
-  int i;
+    struct zstreamelem (*findz)(double, double)
+    struct zstreamelem *zmin,
+    struct zstreamelem *zmax) {
   double *xi, *yi;
-  struct zstreamelem newelem;
-  Minmaxpair zminmax = {tagtoelem(NOSOL), tagtoelem(NOSOL)}; 
-  
-  i = 0;
+  Zstreamptr zi;
+
+  zi = zstream;
   for (xi = xmin; xi <= xmax; xi++) {
     for (yi = ymin; yi <= ymax; yi++) {
-      if (i >= znummax-1)
-        break; /* array zstream full */
-      
-      newelem = (*findz)(*xi, *yi);
-      if (elemcmp(newelem, zminmax.min) < 0)
-        zminmax.min = newelem; /* new minimum */
-      if (elemcmp(newelem, zminmax.max) > 0)
-        zminmax.max = newelem; /* new maximum */
-      zstream[i++] = newelem;
-    }
-    if (i >= znummax-1)
-      break; /* array zstream full */
+      if (zi->tag == END)
+        return; /* array zstream full */
 
+      *zi = (*findz)(*xi, *yi);
+      if (zi->tag == SOL) {
+        /* solution exists */
+        if (elemcmp(*zi, *zmin) < 0)
+          *zmin = *zi; /* new minimum */
+        if (elemcmp(*zi, *zmax) > 0)
+          *zmax = *zi; /* new maximum */
+      }
+      zi++;
+    }
+    if (zi->tag == END)
+      return; /* array zstream full */
+    
     /* add newline after finishing one
      * row of y's, if space left */
-    zstream[i++] = tagtoelem(NEWLINE);
+    *(zi++) = tagtononsol(NEWLINE);
   }
-  /* add end marker to very end */
-  zstream[i] = tagtoelem(END);
-  return zminmax;
 }
 
 /* Return:
@@ -186,6 +196,6 @@ struct zstreamelem zfinder(double x, double y,
       return theta;
     default:
       /* no solution */
-      return tagtoelem(NOSOL);
+      return tagtononsol(NOSOL);
   }
 }
