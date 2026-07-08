@@ -152,10 +152,6 @@ int elemcmp(struct zstreamelem elem1,
   }
 }
 
-/* return type of function from double to
- * double -> double */
-typedef double (*Curriedfunc)(double);
-
 /* First, calculate the phi-coordinate in spherical
  * coordinates of a point given by the cartesian
  * coordinates x and y. Then calculate the 
