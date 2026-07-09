@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 #include "zstream.h"
+#include "numsolvers.h" /* TODO: this header
+                           file */
 
 #define XMIN -1.0
 #define XMAX 1.0
@@ -44,7 +46,7 @@ void arrcreate(double arr[], int len,
  *  - .tag=SOL if z-value was found by
  *    findz (solution exists)
  *  - .tag=EMPTY if no fitting
- *    z-value was found (no solution).
+ *    z-value was found (no solution).  
  * In any case, the return value of
  * findz is inserted into the array
  * pointed by zstream until the end
@@ -168,12 +170,14 @@ int elemcmp(struct zstreamelem elem1,
  * (x, y) is calculated and
  *  - { SOL, { z-value} } is returned.
  * Otherwise
- *  - { NOSOL, { ' ' } } is returned. */
+ *  - { EMPTY, { ' ' } } is returned. */
 struct zstreamelem zfinder(double x, double y,
     double *thetamin, double *thetamax,
     struct zstreamelem (*rootfinder)(double *, double *, 
-      double (*)(double), double), double precision,
-    Curriedfunc (*spherfunc)(double)) {
+      double (*)(double, double), 
+      double, double), 
+    double precision,
+    double (*spherfunc)(double, double)) {
   struct streamelem theta;
   double phi, r, cosphi;
 
@@ -183,15 +187,17 @@ struct zstreamelem zfinder(double x, double y,
   phi = y/fabs(y) * acos(cosphi);
 
   /* calculate theta and corresponding height z */
-  theta = rootfinder(thetamin, thetamax, 
-      spherfunc(phi), precision);
+  theta = (*rootfinder)(thetamin, thetamax, 
+      &spherfunc, phi, precision);
   switch (theta.tag) {
     case SOL:
-      /* solution exists -> can calculate z */
+      /* solution exists -> can calculate z 
+       * (z is stored in the same zstreamelem
+       * where theta was) */
       theta.content.height = r * cos(theta.content.height);
       return theta;
     default:
       /* no solution */
-      return tagtononsol(NOSOL);
+      return tagtononsol(EMPTY);
   }
 }
