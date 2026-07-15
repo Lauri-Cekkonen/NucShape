@@ -16,9 +16,16 @@
  * NOTE: x, xmin and xmax refer to the
  * coordinate of general 1D space. They
  * don't necessarily correspond to the 
- * coordinate x of spherical coordinates
+ * coordinate x of cartesian coordinates
  * (in the application of asciimap.c,
- * they correspond to coordinate theta).
+ * they correspond to coordinate theta
+ * of spherical coordinates).
+ *
+ * NOTE ABOUT DESIGN: I decided to implement
+ * the function composition using global
+ * variables (in compdouble2D struct) and
+ * composition.h in order to keep this
+ * function as simple as possible.
  *
  * RETURN: If x satisfies the above condition,
  * return

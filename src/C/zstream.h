@@ -1,8 +1,8 @@
-/* possible tags of the elements
+/* Possible tags of the elements
  * in a z-value stream. In naming
  * and documentation, EMPTY,
  * NEWLINE and END are called
- * "non-solution tags". */ 
+ * 'non-solution tags'. */ 
 enum zstreamtag {
   EMPTY   = 01, /* no solution or to be
                    initialized later */
