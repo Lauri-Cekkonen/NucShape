@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "zstream.h"
+#include "coordinates.h"
 #include "numsolvers.h" /* TODO: this header
                            file */
 
@@ -87,8 +88,8 @@ void arrcreate(double arr[], int len,
  * only the first row and first element on
  * the second row get mapped by findz. */
 void xytozmap(Zstreamptr zstream,
-    double *xmin, double *xmax,
-    double *ymin, double *ymax,
+    const double *xmin, const double *xmax,
+    const double *ymin, const double *ymax,
     struct zstreamelem (*findz)(double, double)
     struct zstreamelem *zmin,
     struct zstreamelem *zmax) {
@@ -172,23 +173,33 @@ int elemcmp(struct zstreamelem elem1,
  * Otherwise
  *  - { EMPTY, { ' ' } } is returned. */
 struct zstreamelem zfinder(double x, double y,
-    double *thetamin, double *thetamax,
+    const double *thetamin, 
+    const double *thetamax,
     struct zstreamelem (*rootfinder)(double *, double *, 
-      double (*)(double, double), 
-      double, double), 
+      double (*)(Coordpoint), 
+      Coordpoint, double), 
     double precision,
-    double (*spherfunc)(double, double)) {
+    double (*spherfunc)(Coordpoint)) {
   struct streamelem theta;
   double phi, r, cosphi;
+  Coordpoint p;
 
   /* calculate phi using radius r in xy-plane */
   r = sqrt(pow(x,2) + pow(y,2));
   cosphi = x/r;
   phi = y/fabs(y) * acos(cosphi);
 
+  /* initialize Coordpoint p to hold
+   * phi-value and having generic
+   * coordinate x1 pointing to theta */
+  p = unitsphergen(1.0 /* placeholder */, phi);
+  p.x1 = &p.coord.unitspher.theta; /* p.x1 now
+                                      points
+                                      to theta */
+
   /* calculate theta and corresponding height z */
   theta = (*rootfinder)(thetamin, thetamax, 
-      &spherfunc, phi, precision);
+      &spherfunc, &p, precision);
   switch (theta.tag) {
     case SOL:
       /* solution exists -> can calculate z 
