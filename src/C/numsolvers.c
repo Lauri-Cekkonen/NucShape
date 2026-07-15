@@ -38,6 +38,10 @@ struct zstreamelem bruteforce(const double *x1min,
     double precision) {
   double *x1; /* loop index */
 
+  if (allcoord->x1 == NULL)
+    fprintf(stderr, "bruteforce-function: "
+        "x1 member in input Coordpoint "
+        "object was not initialized.");
   for (x1 = x1min; x1 < x1max; x1++) {
     *(allcoord->x1) = *x1;
     if (fabs((*func)(*allcoord)) < precision)
