@@ -1,77 +1,49 @@
 #include <math.h>
 #include "zstream.h"
-#include "composition.h"
+#include "coordinates.h"
 
 /* Calculate numerically the root of function
- * func, i.e. x satisfying
- *   func(x) = 0.
+ * func, i.e. x1 satisfying
+ *   func(x1) = 0.
  * This is done numerically by testing in
- * order each element x in array
- *   [*xmin, *(xmin+1), ..., *xmax]
- * whether (*func)(x) is closer to zero than
- * the given precision ("brute force"):
- *   abs((*func)(x)) < precision
- * where "abs" is absolute value. 
+ * order each element x1 in array
+ *   [*x1min, *(x1min+1), ..., *x1max]
+ * whether (*func)(x1) is closer to zero than
+ * the given precision ('brute force'):
+ *   abs((*func)(x1)) < precision
+ * where 'abs' is absolute value. 
  * 
- * NOTE: x, xmin and xmax refer to the
- * coordinate of general 1D space. They
- * don't necessarily correspond to the 
- * coordinate x of cartesian coordinates
- * (in the application of asciimap.c,
- * they correspond to coordinate theta
- * of spherical coordinates).
+ * NOTE: x1, x1min and x1max refer to 
+ * generic coordinate x1.
  *
- * NOTE ABOUT DESIGN: I decided to implement
- * the function composition using global
- * variables (in compdouble2D struct) and
- * composition.h in order to keep this
- * function as simple as possible.
+ * NOTE: The function func(x1) is implemented
+ * as (*func)(p) where p is a Coordpoint
+ * object. p can even correspond to
+ * coordinates in multiple dimensions
+ * (e.g. spherical coordinates) but the
+ * algorithm of finding the root is carried
+ * out along the one-dimensional direction
+ * in the direction along the coordinate
+ * pointed to by p.x1.
  *
- * RETURN: If x satisfies the above condition,
+ * RETURN: If x1 satisfies the above condition,
  * return
- *   { SOL, { x } }
+ *   { SOL, { x1 } }
  * otherwise return
  *   { EMPTY, { ' ' } }. */
-struct zstreamelem bruteforce(double *xmin, double *xmax,
-    double (*func)(double),
+struct zstreamelem bruteforce(const double *x1min, 
+    const double *x1max,
+    double (*func)(Coordpoint),
+    Coordpoint *allcoord,
     double precision) {
-  double *xi;
+  double *x1; /* loop index */
 
-  for (xi = xmin; xi < xmax; xi++) {
-    if (fabs((*func)(*xi)) < precision)
-      return { SOL, { *xi } };
+  for (x1 = x1min; x1 < x1max; x1++) {
+    *(allcoord->x1) = *x1;
+    if (fabs((*func)(*allcoord)) < precision)
+      return { SOL, { *x1 } };
   }
   /* no solution found */
   return tagtononsol(EMPTY);
 }
 
-/* Helper struct for function composition.
- * In this file used for:
- *   (*comp.f) --> fix2ndarg */
-static struct compdouble2D comp;
-
-/* Makes the function
- *   double (*comp.f)(double arg1, double arg2);
- * into function
- *   double h(double arg1);
- * by fixing the second argument of (*comp.f)
- * as the value comp.param. */
-static double fix2ndarg(double arg) {
-  return (*(comp.f))(arg, comp.param);
-}
-
-/* Solve roots of the function pointed to by
- * func along a 1D path given by fix2ndarg
- * (external) and param. The algorithm 
- * bruteforce is used for solving the roots 
- * numerically. */
-struct zstreamelem bruteforce2D(double *xmin, double *xmax,
-    double (*func)(double, double),
-    double param,
-    double precision) {
-  comp.f     = func;
-  comp.param = param;
-  return bruteforce(xmin, xmax
-      &fix2ndarg,
-      precision);
-}
