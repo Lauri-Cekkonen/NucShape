@@ -13,7 +13,8 @@
 #define YNUM 30
 #define MAXGRID 5000
 
-main() {
+main() 
+{
   double xvals[XNUM];
   double yvals[YNUM];
   struct zstreamelem zvals[MAXGRID];
@@ -27,7 +28,8 @@ main() {
  * with equal spacing
  * d = (max-min)/len. */
 void arrcreate(double arr[], int len,
-               double min, double max) {
+               double min, double max) 
+{
   int i;
   double d = (max-min)/((double)len);
   
@@ -92,7 +94,8 @@ void xytozmap(Zstreamptr zstream,
     const double *ymin, const double *ymax,
     struct zstreamelem (*findz)(double, double)
     struct zstreamelem *zmin,
-    struct zstreamelem *zmax) {
+    struct zstreamelem *zmax) 
+{
   double *xi, *yi;
   Zstreamptr zi;
 
@@ -132,7 +135,8 @@ void xytozmap(Zstreamptr zstream,
  * Elements with other zstreamtag than SOL
  * are equivalent. */
 int elemcmp(struct zstreamelem elem1,
-            struct zstreamelem elem2) {
+            struct zstreamelem elem2) 
+{
   switch (elem1.tag) {
     case SOL:
       switch (elem2.tag) {
@@ -179,7 +183,8 @@ struct zstreamelem zfinder(double x, double y,
       double (*)(Coordpoint), 
       Coordpoint, double), 
     double precision,
-    double (*spherfunc)(Coordpoint)) {
+    double (*spherfunc)(Coordpoint)) 
+{
   struct streamelem theta;
   double phi, r, cosphi;
   Coordpoint p;

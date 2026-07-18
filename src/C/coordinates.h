@@ -90,7 +90,8 @@ typedef struct {
  * corresponding to cartesian
  * coordinates in three dimensions. */
 static Coordpoint cart3Dgen(double x,
-    double y, double z) {
+    double y, double z) 
+{
   struct coordpoint point;
   point.tag = CART3D;
   point.coord.cart3D.x = x;
@@ -108,7 +109,8 @@ static Coordpoint cart3Dgen(double x,
  * coordinates on the unit sphere
  * (r=1). */
 static Coordpoint unitsphergen(double theta,
-    double phi) {
+    double phi) 
+{
   struct coordpoint point;
   point.tag = UNITSPHER;
   point.coord.unitspher.theta = theta;

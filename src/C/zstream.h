@@ -28,7 +28,8 @@ struct zstreamelem {
  * input is invalid and causes the
  * char corresponding to EMPTY to be
  * returned.*/
-static char tagtochar(enum zstreamtag tag) {
+static char tagtochar(enum zstreamtag tag) 
+{
   switch (tag) {
     case EMPTY:   return ' ';
     case NEWLINE: return '\n';
@@ -46,7 +47,8 @@ static char tagtochar(enum zstreamtag tag) {
  * gets zstreamelem with .tag=SOL and
  * .content.c=' ' which is an invalid
  * combination. */
-static struct zstreamelem tagtononsol(enum zstreamtag tag) {
+static struct zstreamelem tagtononsol(enum zstreamtag tag) 
+{
   struct zstreamelem elem;
 
   elem.tag = tag;
@@ -80,7 +82,8 @@ typedef struct zstreamelem *Zstreamptr;
  * that ends with
  *   { END, { '\0' } }. */
 static Zstreamptr zstreaminit(struct zstreamelem zstream[],
-    int znummax) {
+    int znummax) 
+{
   zstream[--znummax] = tagtononsol(END);
   return &zstream[0];
 }

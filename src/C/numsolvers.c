@@ -35,7 +35,8 @@ struct zstreamelem bruteforce(const double *x1min,
     const double *x1max,
     double (*func)(Coordpoint),
     Coordpoint *allcoord,
-    double precision) {
+    double precision) 
+{
   double *x1; /* loop index */
 
   if (allcoord->x1 == NULL)
