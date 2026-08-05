@@ -1,9 +1,10 @@
 #include "coordinates.h"
 #include <math.h>
 
-/* Tag corresponding to the unary
- * operation to be applied to the
- * next polnottnode object. */
+/* Operator flag corresponding 
+ * to the unary operation to be
+ * applied to the next polnottnode 
+ * object. */
 enum unaryoper {
   UNARYPLUS,     /* +x */
   UNARYMINUS,    /* -x */
@@ -14,10 +15,11 @@ enum unaryoper {
   SQRT           /* square root */
 };
 
-/* Tag corresponding to the binary
- * operation to be applied to the
- * next left and next right 
- * polnottnode objects. */
+/* Operator flag corresponding 
+ * to the binary operation to be 
+ * applied to the next left and
+ * next right polnottnode 
+ * objects. */
 enum binarynode {
   PLUS,  /* x + y */
   MINUS, /* x - y */
@@ -51,23 +53,50 @@ struct polnottnode {
     double (*funcptr)(Coordpoint);
     struct {
       /* The unary operation
-       * corresponding to 'tag'
+       * corresponding to 'flag'
        * will be applied to the
        * polnottnode object pointed
        * to by 'next'. */
-      enum unaryoper tag;
+      enum unaryoper flag;
       struct polnottnode *next;
     } unarynode;
     struct {
       /* The binary operation
-       * corresponding to 'tag'
+       * corresponding to 'flag'
        * will be applied to the
        * polnottnode objects pointed
        * to by 'nextleft' and
        * 'nextright'. */
-      enum binaryoper tag;
+      enum binaryoper flag;
       struct polnottnode *nextleft;
       struct polnottnode *nextright;
     } binarynode;
   } content;
 };
+
+/* Status signal to be returned
+ * by the 'apply' function. */
+enum applystatus {
+  APPLY_OK = 0,
+  DIV_BY_ZERO,  /* double is tried
+                   to divide by
+                   0.0 */
+  SQRT_OF_NEG,  /* negative argument
+                   for square root
+                   (note: complex
+                   numbers not supported
+                   in the current
+                   version) */
+  UNKNOWN_OPER  /* operator flag
+                   does not match
+                   any flag defined in
+                   enum applyoper */
+};
+
+static enum applystatus apply(
+    const struct polnottnode *curr,
+    Coordpoint arg,
+    double *result)
+{
+  switch (curr->tag) {
+    case 
