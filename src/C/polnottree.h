@@ -71,6 +71,39 @@ struct polnottnode {
   } content;
 };
 
+/* Allocate memory for a
+ * polnottnode object in
+ * the heap memory and
+ * return a pointer to
+ * the allocated object. */
+static struct polnottnode *polnottalloc(void)
+{
+  return (struct polnottnode *) malloc(
+      sizeof(struct polnottnode));
+}
+
+/* Allocate memory for a
+ * unarynode object in
+ * the heap memory and
+ * return a pointer to
+ * the allocated object. */
+static struct unarynode *unaryalloc(void)
+{
+  return (struct unarynode *) malloc(
+      sizeof(struct unarynode));
+}
+
+/* Allocate memory for a
+ * binarynode object in
+ * the heap memory and
+ * return a pointer to
+ * the allocated object. */
+static struct binarynode *binaryalloc(void)
+{
+  return (struct binarynode *) malloc(
+      sizeof(struct binarynode));
+}
+
 /* Status signal to be returned
  * by different apply function. */
 enum applystatus {
