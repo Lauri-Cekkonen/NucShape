@@ -98,22 +98,23 @@ static struct binarynode *binaryalloc(void)
       sizeof(struct binarynode));
 }
 
+/* Declarations of create functions
+ * defined in polnottree.c: */
 
-/* Status signal to be returned
- * by different create functions. */
-enum createstatus {
-  CREATE_OK = 0,
-  UNKNOWN_OPER, /* directive for
-                   which operation
-                   to include in the
-                   created polnottnode
-                   does not match any
-                   flag in enums
-                   unaryoper or
-                   binaryoper */
-  OUT_OF_MEMORY /* run out of heap
-                   memory */
-};
+struct polnottnode *scalar(
+    double num);
+
+struct polnottnode *func(
+    double (*funcptr)(Coordpoint));
+
+struct polnottnode *unary(
+    enum unaryoper operation,
+    struct polnottnode *operand);
+
+struct polnottnode *binary(
+    struct polnottnode *operand1,
+    enum binaryoper operation,
+    struct polnottnode *operand2);
 
 /* Status signal to be returned
  * by different apply functions. */

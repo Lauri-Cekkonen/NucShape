@@ -1,5 +1,164 @@
 #include "polnottree.h"
 
+/* Constructor that creates a
+ * scalar-type polnottnode object.
+ * When 'apply' function is used
+ * on the created object, a real
+ * number corresponding to 'num'
+ * argument is returned.
+ * 
+ * NOTE: If the heap runs out of 
+ * memory, polnottalloc cannot 
+ * allocate memory to create the 
+ * object and NULL is returned. */
+struct polnottnode *scalar(
+    double num)
+{
+  struct polnottnode *p = polnottalloc();
+  if (p == NULL)
+    return NULL; /* run out of memory */
+  p->tag = SCALAR;
+  p->content.scalar = num;
+  return p;
+}
+
+/* Constructor that creates a
+ * func-type polnottnode object.
+ * When 'apply' function is used
+ * on the created object, a real
+ * number corresponding to
+ * 'funcptr' applied on the
+ * Coordpoint argument of 'apply'
+ * is returned.
+ * 
+ * NOTE: If the heap runs out of 
+ * memory, polnottalloc cannot 
+ * allocate memory to create the 
+ * object and NULL is returned. */
+struct polnottnode *func(
+    double (*funcptr)(Coordpoint))
+{
+  struct polnottnode *p = polnottalloc();
+  if (p == NULL)
+    return NULL; /* run out of memory */
+  p->tag = FUNC;
+  p->content.func = funcptr;
+  return p;
+}
+
+/* Constructor that creates a
+ * unary-type polnottnode object.
+ * When 'apply' function is used
+ * on the created object, the
+ * unary operation corresponding
+ * to 'operation' argument is
+ * applied on the real number
+ * corresponding to 'operand'
+ * argument.
+ *
+ * NOTE: If the heap runs out of 
+ * memory, polnottalloc cannot 
+ * allocate memory to create the 
+ * object and NULL is returned.
+ *
+ * NOTE: If 'operand' is NULL,
+ * NULL is returned. Also if
+ * 'operation' is not a
+ * recognized operation (see
+ * enum unaryoper in
+ * polnottree.h), NULL is
+ * returned. */
+struct polnottnode *unary(
+    enum unaryoper operation,
+    struct polnottnode *operand)
+{
+  struct polnottnode *p;
+  struct unarynode   *u;
+
+  if (operand == NULL)
+    return NULL; /* operating NULL
+                    undefined */
+  switch (operation) {
+    case UNARYPLUS:
+    case UNARYMINUS:
+    case SIN: case COS:
+    case EXP:
+    case SQRT:
+      u = unaryalloc();
+      if (u == NULL)
+        return NULL; /* run out of memory */
+      u->flag = operation;
+      u->next = operand;
+      
+      p = polnottalloc();
+      if (p == NULL)
+        return NULL; /* run out of memory */
+      p->tag = UNARY;
+      p->content.unary = u;
+      return p;
+    default:
+      return NULL; /* unknown operation */
+  }
+}
+
+/* Constructor that creates a
+ * binary-type polnottnode object.
+ * When 'apply' function is used
+ * on the created object, the
+ * binary operation corresponding
+ * to 'operation' argument is
+ * applied on the real numbers
+ * corresponding to 'operand1'
+ * and 'operand2' arguments.
+ *
+ * NOTE: If the heap runs out of 
+ * memory, polnottalloc cannot 
+ * allocate memory to create the 
+ * object and NULL is returned.
+ *
+ * NOTE: If 'operand1' or
+ * 'operand2' is NULL,
+ * NULL is returned. Also if
+ * 'operation' is not a
+ * recognized operation (see
+ * enum binaryoper in
+ * polnottree.h), NULL is
+ * returned. */
+struct polnottnode *binary(
+    struct polnottnode *operand1,
+    enum binaryoper operation,
+    struct polnottnode *operand2)
+{
+  struct polnottnode *p;
+  struct binarynode  *b;
+
+  if (operand1 == NULL || operand2 == NULL)
+    return NULL; /* operating NULL
+                    undefined */
+  switch (operation) {
+    case PLUS:
+    case MINUS:
+    case PROD:
+    case DIV:
+      b = binaryalloc();
+      if (b == NULL)
+        return NULL; /* run out of memory */
+      b->flag = operation;
+      b->nextleft = operand1;
+      b->nextright = operand2;
+
+      p = polnottalloc();
+      if (p == NULL)
+        return NULL; /* run out of memory */
+      p->tag = BINARY;
+      p->content.binary = b;
+      return p;
+    default:
+      return NULL; /* unknown operation */
+  }
+}
+
+
 /* Apply Polish notation tree
  * starting from 'curr' on
  * 'arg'. 'curr' points to
