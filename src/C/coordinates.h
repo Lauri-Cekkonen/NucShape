@@ -92,7 +92,7 @@ typedef struct {
 static Coordpoint cart3Dgen(double x,
     double y, double z) 
 {
-  struct coordpoint point;
+  Coordpoint point;
   point.tag = CART3D;
   point.coord.cart3D.x = x;
   point.coord.cart3D.y = y;
@@ -111,7 +111,7 @@ static Coordpoint cart3Dgen(double x,
 static Coordpoint unitsphergen(double theta,
     double phi) 
 {
-  struct coordpoint point;
+  Coordpoint point;
   point.tag = UNITSPHER;
   point.coord.unitspher.theta = theta;
   point.coord.unitspher.phi   = phi;

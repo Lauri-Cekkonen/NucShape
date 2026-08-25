@@ -205,9 +205,9 @@ enum applystatus apply(
       *result = (curr->content.func)(arg);
       return APPLY_OK;
     case UNARY:
-      return applyunary(curr->unary, arg, result);
+      return applyunary(curr->content.unary, arg, result);
     case BINARY:
-      return applybinary(curr->binary, arg, result);
+      return applybinary(curr->content.binary, arg, result);
     default:
       return UNKNOWN_POLNOT;
   }
