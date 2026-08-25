@@ -98,8 +98,25 @@ static struct binarynode *binaryalloc(void)
       sizeof(struct binarynode));
 }
 
+
 /* Status signal to be returned
- * by different apply function. */
+ * by different create functions. */
+enum createstatus {
+  CREATE_OK = 0,
+  UNKNOWN_OPER, /* directive for
+                   which operation
+                   to include in the
+                   created polnottnode
+                   does not match any
+                   flag in enums
+                   unaryoper or
+                   binaryoper */
+  OUT_OF_MEMORY /* run out of heap
+                   memory */
+};
+
+/* Status signal to be returned
+ * by different apply functions. */
 enum applystatus {
   APPLY_OK = 0,
   DIV_BY_ZERO,     /* double is tried
@@ -119,13 +136,13 @@ enum applystatus {
                       does not match
                       any flag defined in
                       enum binaryoper */
-  UNKNOWN_POLNOT,  /* type tag does
+  UNKNOWN_POLNOT   /* type tag does
                       not match any
                       tag defined in
                       enum nodetype */ 
 };
 
-/* Declarations of functions
+/* Declarations of apply functions
  * defined in polnottree.c: */
 
 enum applystatus apply(
