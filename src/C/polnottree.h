@@ -137,10 +137,15 @@ enum applystatus {
                       does not match
                       any flag defined in
                       enum binaryoper */
-  UNKNOWN_POLNOT   /* type tag does
+  UNKNOWN_POLNOT,  /* type tag does
                       not match any
                       tag defined in
-                      enum nodetype */ 
+                      enum nodetype */
+  OUT_OF_MEMORY    /* run out of heap
+                      memory when
+                      allocating memory
+                      to create polnottree
+                      objects */
 };
 
 /* Declarations of apply functions

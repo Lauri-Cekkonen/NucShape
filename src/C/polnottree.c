@@ -62,12 +62,7 @@ struct polnottnode *func(
  * object and NULL is returned.
  *
  * NOTE: If 'operand' is NULL,
- * NULL is returned. Also if
- * 'operation' is not a
- * recognized operation (see
- * enum unaryoper in
- * polnottree.h), NULL is
- * returned. */
+ * NULL is returned. */
 struct polnottnode *unary(
     enum unaryoper operation,
     struct polnottnode *operand)
@@ -78,27 +73,21 @@ struct polnottnode *unary(
   if (operand == NULL)
     return NULL; /* operating NULL
                     undefined */
-  switch (operation) {
-    case UNARYPLUS:
-    case UNARYMINUS:
-    case SIN: case COS:
-    case EXP:
-    case SQRT:
-      u = unaryalloc();
-      if (u == NULL)
-        return NULL; /* run out of memory */
-      u->flag = operation;
-      u->next = operand;
+  u = unaryalloc();
+  if (u == NULL)
+    return NULL; /* run out of memory */
+  u->flag = operation; /* can be any operation
+                          defined in enum
+                          unaryoper in
+                          polnottree.h */
+  u->next = operand;
       
-      p = polnottalloc();
-      if (p == NULL)
-        return NULL; /* run out of memory */
-      p->tag = UNARY;
-      p->content.unary = u;
-      return p;
-    default:
-      return NULL; /* unknown operation */
-  }
+  p = polnottalloc();
+  if (p == NULL)
+    return NULL; /* run out of memory */
+  p->tag = UNARY;
+  p->content.unary = u;
+  return p;
 }
 
 /* Constructor that creates a
@@ -118,12 +107,7 @@ struct polnottnode *unary(
  *
  * NOTE: If 'operand1' or
  * 'operand2' is NULL,
- * NULL is returned. Also if
- * 'operation' is not a
- * recognized operation (see
- * enum binaryoper in
- * polnottree.h), NULL is
- * returned. */
+ * NULL is returned. */
 struct polnottnode *binary(
     struct polnottnode *operand1,
     enum binaryoper operation,
@@ -135,27 +119,23 @@ struct polnottnode *binary(
   if (operand1 == NULL || operand2 == NULL)
     return NULL; /* operating NULL
                     undefined */
-  switch (operation) {
-    case PLUS:
-    case MINUS:
-    case PROD:
-    case DIV:
-      b = binaryalloc();
-      if (b == NULL)
-        return NULL; /* run out of memory */
-      b->flag = operation;
-      b->nextleft = operand1;
-      b->nextright = operand2;
+  b = binaryalloc();
+  if (b == NULL)
+    return NULL; /* run out of memory */
+  b->flag = operation; /* can be any operation
+                          defined in enum
+                          binaryoper in
+                          polnottree.h */
 
-      p = polnottalloc();
-      if (p == NULL)
-        return NULL; /* run out of memory */
-      p->tag = BINARY;
-      p->content.binary = b;
-      return p;
-    default:
-      return NULL; /* unknown operation */
-  }
+  b->nextleft = operand1;
+  b->nextright = operand2;
+
+  p = polnottalloc();
+  if (p == NULL)
+    return NULL; /* run out of memory */
+  p->tag = BINARY;
+  p->content.binary = b;
+  return p;
 }
 
 
@@ -197,6 +177,8 @@ enum applystatus apply(
     Coordpoint arg,
     double *result)
 {
+  if (curr == NULL)
+    return OUT_OF_MEMORY;
   switch (curr->tag) {
     case SCALAR:
       *result = curr->content.scalar;
