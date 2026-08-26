@@ -86,6 +86,8 @@ typedef struct {
   } coord;
 } Coordpoint;
 
+/* Example constructors: */
+
 /* Initialize a Coordpoint object
  * corresponding to cartesian
  * coordinates in three dimensions. */
