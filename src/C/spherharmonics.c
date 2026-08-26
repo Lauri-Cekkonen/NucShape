@@ -1,4 +1,4 @@
-#include "coordinates.h"
+#include "spherharmonics.h"
 #include <math.h>
 
 #define PI 3.14159
