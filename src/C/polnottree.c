@@ -171,7 +171,23 @@ struct polnottnode *binary(
  * than APPLY_OK is returned,
  * the double pointed to by
  * 'result' might not have
- * a valid value. */
+ * a valid value. 
+ *
+ * NOTE: Let's say we define
+ *  double f(Coordpoint p)
+ *  {
+ *    switch (p.tag) {
+ *      case CART3D:
+ *        return sqrt(p.coord.cart3D.x);
+ *      default:
+ *        return -1.0;
+ *    }
+ *  }
+ * and
+ *  Coordpoint p = cart3Dgen(-1, 0, 0);
+ * then
+ *  apply(&f, p, ...);
+ * returns APPLY_OK (!). */
 enum applystatus apply(
     const struct polnottnode *curr,
     Coordpoint arg,
