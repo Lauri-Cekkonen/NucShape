@@ -16,11 +16,11 @@
  * generic coordinate x1.
  *
  * NOTE: The function func(x1) is 
- * implemented as polnottree struct 
+ * implemented as polnottnode struct 
  * pointer *expr. Function application
  * is achieved with 'apply' function
  * from polnottree.c as
- *   apply(expr, p, result);
+ *   appely(expr, p, result);
  * where 'p' is a Coordpoint object
  * and 'result' points to a double
  * where the result of the application
@@ -44,7 +44,7 @@ enum solverstatus bruteforceroot(
     double *xi,          /* loop index and
                             return value
                             container */
-    const struct polnottree *expr, 
+    const struct polnottnode *expr, 
                          /* algorithm goal:
                             find roots of
                             'expr' */
@@ -73,14 +73,14 @@ enum solverstatus bruteforceroot(
                        know along which
                        coordinate to find
                        roots */
-  for (xi = x1min; xi < x1max; xi++) {
+  for (xi = (double *)x1min; xi < x1max; xi++) {
     *(restofcoord->x1) = *xi; /* move forward
                                  along the line
                                  to a new point
                                  for the algo-
                                  rithm */
     switch (status = apply(expr, 
-          restofcoord, 
+          *restofcoord, 
           &exprval)) {
       case APPLY_OK:
         /* note: no assignment to

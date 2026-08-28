@@ -3,7 +3,7 @@
 /* Status signal about the end
  * state of an equation solver
  * when the algorithm stopped. */
-enum solverstate {
+enum solverstatus {
   SOLVED = 0, /* equation could
                  be solved */
   UNSOLVABLE, /* the algorithm
@@ -32,7 +32,7 @@ enum solverstatus bruteforceroot(
     const double *x1min, 
     const double *x1max,
     double *xi,
-    const struct polnottree *expr,
+    const struct polnottnode *expr,
     Coordpoint *restofcoord,
     double precision,
     enum applystatus *applyerror);
