@@ -1,3 +1,6 @@
+#ifndef POLNOTTREE
+#define POLNOTTREE
+
 #include "coordinates.h"
 #include <math.h>
 
@@ -165,3 +168,5 @@ enum applystatus applybinary(
     const struct binarynode *curr,
     Coordpoint arg,
     double *result);
+
+#endif
