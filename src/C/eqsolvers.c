@@ -1,4 +1,4 @@
-#include "numsolvers.h"
+#include "eqsolvers.h"
 
 /* Calculate numerically the root of 
  * function func, i.e. x1 satisfying
