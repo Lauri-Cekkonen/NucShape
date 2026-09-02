@@ -1,3 +1,8 @@
+#ifndef COORDINATES
+#define COORDINATES
+
+#include <math.h>
+
 /* Possible tags for a Coordpoint
  * object. */
 enum coordsystem {
@@ -91,7 +96,7 @@ typedef struct {
 /* Initialize a Coordpoint object
  * corresponding to cartesian
  * coordinates in three dimensions. */
-static Coordpoint cart3Dgen(double x,
+static Coordpoint gen3D(double x,
     double y, double z) 
 {
   Coordpoint point;
@@ -110,7 +115,7 @@ static Coordpoint cart3Dgen(double x,
  * corresponding to spherical
  * coordinates on the unit sphere
  * (r=1). */
-static Coordpoint unitsphergen(double theta,
+static Coordpoint genunitspher(double theta,
     double phi) 
 {
   Coordpoint point;
@@ -124,3 +129,34 @@ static Coordpoint unitsphergen(double theta,
   return point;
 }
 
+/* Example projections to coordinate
+ * axis: */
+
+static double xval(Coordpoint p)
+{
+  switch (p.tag) {
+    case CART1D:
+      return p.coord.cart1D.x;
+    case CART2D:
+      return p.coord.cart2D.x;
+    case CART3D:
+      return p.coord.cart3D.x;
+    case UNITSPHER:
+      return sin(p.coord.unitspher.theta)*
+         cos(p.coord.unitspher.phi);
+    case UNITSPHER:
+      return p.coord.spher.r*
+         sin(p.coord.spher.theta)*
+         cos(p.coord.spher.phi);
+    case POLAR:
+      return p.coord.polar.r*
+         cos(p.coord.polar.theta);
+    case CYLIND:
+      return p.coord.cylind.r*
+         cos(p.coord.cylind.theta);
+    default:
+      return -1.0;
+  }
+}
+
+#endif COORDINATES
