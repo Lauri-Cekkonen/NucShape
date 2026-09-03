@@ -90,21 +90,73 @@ enum solverstatus bruteforceroot(
                           * outside this
                           * function */ )
 {
-  double exprval;
-  const double *x1; /* loop index */
-  enum applystatus status; /* status at each
-                              step in the
-                              loop */
-  enum applystatus error; /* container for
-                             apply error
-                             during the
-                             loop */
+  enum applystatus error;
 
   if (restofcoord->x1 == NULL)
     return BAD_ARG; /* algorithm does not
                        know along which
                        coordinate to find
-                       roots */
+                       roots -> the user
+                       providing restofcoord
+                       should've provided
+                       this information 
+                       by setting 
+                       restofcoord->x1
+                       before inserting
+                       restofcoord into
+                       this function as
+                       an argument */
+  error = APPLY_OK; /* stays in this value
+                       unless apply error
+                       occurs during the
+                       loop */
+  switch (bruteforceloop(
+        x1min, x1max, foundroot,
+        expr, restofcoord, precision,
+        &error)) {
+    case SOLVED:
+      return SOLVED;
+    case UNSOLVABLE:
+      /* check if apply error occured */
+      switch (error) {
+        case APPLY_OK:
+          /* neither a sufficiently
+           * precise solution nor
+           * an apply error found */
+          return UNSOLVABLE;
+        default:
+          /* 'throw' the apply error that 
+           * occured last in the loop */
+          *applyerror = error;
+          return APPLY_ERROR;
+      }
+  }
+}
+
+/* Helper function for 'bruteforceroot'.
+ * See the documentation of
+ * 'bruteforceroot' for more
+ * information. */
+enum solverstatus bruteforceloop(
+    const double *x1min,
+    const double *x1max,
+    double *foundroot,
+    const struct polnottnode *expr,
+    Coordpoint *restofcoord,
+    double precision,
+    enum applystatus *applyerror)
+{
+  double exprval; /* stores the value
+                     of expr */
+  const double *x1; /* loop index */
+  enum applystatus status; /* status at each
+                              step in the
+                              loop */
+  enum applystatus error; /* container for
+                             latest apply 
+                             error during 
+                             the loop */
+
   error = APPLY_OK; /* stays in this value
                        unless apply error
                        occurs during the
@@ -119,12 +171,15 @@ enum solverstatus bruteforceroot(
           *restofcoord, 
           &exprval)) {
       case APPLY_OK:
-        /* note: no assignment to
-         * applyerror */
         if (fabs(exprval) < precision) {
-          /* precise enough solution found */
+          /* precise enough root found.
+           * NOTE: 'applyerror' argument
+           * is not updated. */
           *foundroot = *x1;
-          return SOLVED;
+          return SOLVED; /* ignore previous
+                            apply errors
+                            if a root was
+                            found */
         }
         break;
       default:
@@ -133,17 +188,14 @@ enum solverstatus bruteforceroot(
         break;
     }
   }
-  /* check for found apply error */
-  switch (error) {
-    case APPLY_OK:
-      /* neither a precise enough solution
-       * nor an apply error found */
-      return UNSOLVABLE;
-    default:
-      /* 'throw' the apply error that 
-       * occured last in the loop */
-      *applyerror = error;
-      return APPLY_ERROR;
-  }
+  /* No sufficiently precise
+   * root found. Just in case,
+   * 'throw' the apply error 
+   * that occured last in the
+   * loop. */
+  *applyerror = error; /* In the case of
+                          no apply error,
+                          this is just
+                          APPLY_OK */
+  return UNSOLVABLE;
 }
-

@@ -26,12 +26,22 @@ enum solverstatus {
 };
 
 /* Declarations for equation
- * solvers: */
+ * solvers and their helper
+ * functions: */
 
 enum solverstatus bruteforceroot(
     const double *x1min, 
     const double *x1max,
-    double *xi,
+    double *foundroot,
+    const struct polnottnode *expr,
+    Coordpoint *restofcoord,
+    double precision,
+    enum applystatus *applyerror);
+
+enum solverstatus bruteforceloop(
+    const double *x1min,
+    const double *x1max,
+    double *foundroot,
     const struct polnottnode *expr,
     Coordpoint *restofcoord,
     double precision,
