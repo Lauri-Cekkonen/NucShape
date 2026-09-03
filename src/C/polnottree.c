@@ -138,7 +138,6 @@ struct polnottnode *binary(
   return p;
 }
 
-
 /* Apply Polish notation tree
  * starting from 'curr' on
  * 'arg'. 'curr' points to
@@ -187,7 +186,8 @@ struct polnottnode *binary(
  *  Coordpoint p = cart3Dgen(-1, 0, 0);
  * then
  *  apply(&f, p, ...);
- * returns APPLY_OK (!). */
+ * returns APPLY_OK (!). So
+ * no SQRT_OF_NEG is catched.*/
 enum applystatus apply(
     const struct polnottnode *curr,
     Coordpoint arg,
