@@ -29,18 +29,18 @@ enum coordsystem {
  * {x1,x2} (2D) or {x1,x2,x3} (3D).
  * In that case the function/algorithm
  * accesses the coordinate values
- * stored in 'coord' member via
+ * stored in 'coordinates' member via
  * pointers x1, x2 and x3 which are
  * set to point to the coordinate
  * values. For example, a user could
  * set
- *   p.x1 = &p.coord.cart2D.y;
+ *   p.x1 = &p.coordinates.cart.y;
  * and input the Coordpoint object p
  * into the function/algorithm after
  * which
- *   p->x1
+ *   *(p.x1)
  * gives an access to the value
- *   p.coord.cart2D.y
+ *   p.coordinates.cartesian.y
  * inside the function/algorithm.
  *
  * NOTE: When initializing a Coordpoint
@@ -60,103 +60,71 @@ typedef struct {
   union {
     struct {
       double x;
-    } cart1D; /* tag=CART1D */
+      double y; /* not used for:
+                   tag=CART1D */
+      double z; /* not used for:
+                   tag=CART2D
+                   tag=CART1D */
+    } cartesian;
     struct {
-      double x;
-      double y;
-    } cart2D; /* tag=CART2D */
-    struct {
-      double x;
-      double y;
-      double z;
-    } cart3D; /* tag=CART3D */
-    struct {
+      double r; /* not used for:
+                   tag=UNITSPHER */
       double theta;
       double phi;
-    } unitspher; /* tag=UNITSPHER */
+    } spherical;
     struct {
       double r;
       double theta;
-      double phi;
-    } spher; /* tag=SPHER */
-    struct {
-      double r;
-      double theta;
-    } polar; /* tag=POLAR */
-    struct {
-      double r;
-      double theta;
-      double z;
-    } cylind; /* tag=CYLIND */
-  } coord;
+      double z; /* not used for:
+                   tag=POLAR */
+    } cylindrical;
+  } coordinates;
 } Coordpoint;
 
-/* Example constructors: */
+/* Declarations for Coordpoint
+ * constructors defined in
+ * coordinates.c: */
 
-/* Initialize a Coordpoint object
- * corresponding to cartesian
- * coordinates in three dimensions. */
-static Coordpoint gen3D(double x,
-    double y, double z) 
-{
-  Coordpoint point;
-  point.tag = CART3D;
-  point.coord.cart3D.x = x;
-  point.coord.cart3D.y = y;
-  point.coord.cart3D.z = z;
-  /* initialize pointers to null */
-  point.x1 = NULL;
-  point.x2 = NULL;
-  point.x3 = NULL;
-  return point;
-}
+Coordpoint gen3D(double x,
+    double y, double z);
 
-/* Initialize a Coordpoint object
- * corresponding to spherical
- * coordinates on the unit sphere
- * (r=1). */
-static Coordpoint genunitspher(double theta,
-    double phi) 
-{
-  Coordpoint point;
-  point.tag = UNITSPHER;
-  point.coord.unitspher.theta = theta;
-  point.coord.unitspher.phi   = phi;
-  /* initialize pointers to null */
-  point.x1 = NULL;
-  point.x2 = NULL;
-  point.x3 = NULL;
-  return point;
-}
+Coordpoint genunitspher(double theta,
+    double phi); 
 
-/* Example projections to coordinate
- * axis: */
+/* Status signal to be returned
+ * by projection functions that
+ * sets a double object to a
+ * coordinate value of an input
+ * point or a double pointer 
+ * to point to a coordinate 
+ * value of an input point. */
+enum projectionstatus {
+  PROJECTION_OK = 0,
+  WRONG_COORD_SYS, /* the coord system
+                      of input point
+                      lacks info
+                      to perform
+                      requested
+                      projection */ 
+  UNKNOWN_TAG      /* input point
+                      is of unknown
+                      coord system
+                      (updated
+                      Coordpoint,
+                      outdated
+                      projection) */
+};
 
-static double xval(Coordpoint p)
-{
-  switch (p.tag) {
-    case CART1D:
-      return p.coord.cart1D.x;
-    case CART2D:
-      return p.coord.cart2D.x;
-    case CART3D:
-      return p.coord.cart3D.x;
-    case UNITSPHER:
-      return sin(p.coord.unitspher.theta)*
-         cos(p.coord.unitspher.phi);
-    case UNITSPHER:
-      return p.coord.spher.r*
-         sin(p.coord.spher.theta)*
-         cos(p.coord.spher.phi);
-    case POLAR:
-      return p.coord.polar.r*
-         cos(p.coord.polar.theta);
-    case CYLIND:
-      return p.coord.cylind.r*
-         cos(p.coord.cylind.theta);
-    default:
-      return -1.0;
-  }
-}
+/* Declarations for projection
+ * functions defined in
+ * coordinates.c: */
+
+enum projectionstatus xval(
+    Coordpoint p,
+    double *proj);
+
+enum projectionstatus xptr(
+    Coordpoint p,
+    double *proj);
 
 #endif COORDINATES
