@@ -34,13 +34,15 @@ enum coordsystem {
  * set to point to the coordinate
  * values. For example, a user could
  * set
- *   p.x1 = &p.coordinates.cart.y;
+ *   double *x;
+ *   if (xptr(p, x) == PROJECTION_OK)
+ *     p.x1 = x;
  * and input the Coordpoint object p
  * into the function/algorithm after
  * which
  *   *(p.x1)
  * gives an access to the value
- *   p.coordinates.cartesian.y
+ *   p.coordinates.cartesian.x
  * inside the function/algorithm.
  *
  * NOTE: When initializing a Coordpoint
