@@ -12,36 +12,13 @@
  *   abs((*func)(x1)) < precision
  * where 'abs' is absolute value.
  *
- * RETURN: In the following table,
- * 'found?' means 'an approximative
- * solution inside the precision
- * was found?'.
- *  
- *  found?|apply_error?|return
- *  ______|____________|__________
- *  yes   |no          |SOLVED
- *  yes   |yes         |SOLVED
- *  no    |no          |UNSOLVABLE
- *  no    |yes         |APPLY_ERROR
- *  
- * Note that if an approximative
- * solution is found, any apply
- * error found is ignored (the
- * found apply error is not
- * updated to 'applyerror'
- * argument as a side effect).
- * In general,  we ensure that 
- * applystatus pointed to by 
- * 'applyerror' has a valid
- * (non-garbage) value as a side
- * effect only  when 'bruteforceroot'
- * returns 'APPLY_ERROR'. *
- *
- * If an approximative solution
- * is found, the root is updated
- * to 'foundroot' argument as a
- * side effect.
- *
+ * NOTE: The function bruteforceloop
+ * does the main job of finding
+ * the root and testing for errors.
+ * This function just tests
+ * for badly initalized arguments
+ * and "throws" an appropriate
+ * error when necessary.
  *  
  * NOTE: x1min and x1max refer to 
  * generic coordinate x1.
@@ -64,11 +41,9 @@
  * This one-dimensional curve is in the
  * direction pointed to by
  * 'restofcoord->x1'. */
-enum solverstatus bruteforceroot(
+struct solverresult bruteforceroot(
     const double *x1min, /* lower bound */
     const double *x1max, /* upper bound */
-    double *foundroot,   /* return value
-                            container */
     const struct polnottnode *expr, 
                          /* algorithm goal:
                             find roots of
@@ -82,120 +57,71 @@ enum solverstatus bruteforceroot(
                           * members provide 
                           * the rest of the 
                           * coordinates */
-    double precision,
-    enum applystatus *applyerror
-                         /* make encountered
-                          * apply error
-                          * accessible 
-                          * outside this
-                          * function */ )
+    double precision)
 {
-  enum applystatus error;
-
   if (restofcoord->x1 == NULL)
-    return BAD_ARG; /* algorithm does not
-                       know along which
-                       coordinate to find
-                       roots -> the user
-                       providing restofcoord
-                       should've provided
-                       this information 
-                       by setting 
-                       restofcoord->x1
-                       before inserting
-                       restofcoord into
-                       this function as
-                       an argument */
-  error = APPLY_OK; /* stays in this value
-                       unless apply error
-                       occurs during the
-                       loop */
-  switch (bruteforceloop(
-        x1min, x1max, foundroot,
-        expr, restofcoord, precision,
-        &error)) {
-    case SOLVED:
-      return SOLVED;
-    case UNSOLVABLE:
-      /* check if apply error occured */
-      switch (error) {
-        case APPLY_OK:
-          /* neither a sufficiently
-           * precise solution nor
-           * an apply error found */
-          return UNSOLVABLE;
-        default:
-          /* 'throw' the apply error that 
-           * occured last in the loop */
-          *applyerror = error;
-          return APPLY_ERROR;
-      }
-  }
+    return othererrorresult(BAD_ARG); 
+  return bruteforceloop(
+        x1min, x1max,
+        expr, restofcoord, precision)
 }
 
-/* Helper function for 'bruteforceroot'.
+/* Helper function for the
+ * function 'bruteforceroot'.
  * See the documentation of
  * 'bruteforceroot' for more
- * information. */
-enum solverstatus bruteforceloop(
+ * information.
+ *
+ * NOTE: The last occurred
+ * apply error is saved to
+ * the return value only
+ * if no precise enough 
+ * solution was found. If 
+ * an appropriate solution
+ * was found, no information
+ * about apply errors that
+ * occurred before founding
+ * the solution leaves this 
+ * function.*/
+struct solverresult bruteforceloop(
     const double *x1min,
     const double *x1max,
-    double *foundroot,
     const struct polnottnode *expr,
     Coordpoint *restofcoord,
-    double precision,
-    enum applystatus *applyerror)
+    double precision)
 {
-  double exprval; /* stores the value
-                     of expr */
+  double exprval; /* stores the value of expr 
+                     after application */
   const double *x1; /* loop index */
-  enum applystatus status; /* status at each
-                              step in the
-                              loop */
-  enum applystatus error; /* container for
-                             latest apply 
-                             error during 
-                             the loop */
+  enum applystatus currerror; 
+  enum applystatus savederror;
 
-  error = APPLY_OK; /* stays in this value
-                       unless apply error
-                       occurs during the
-                       loop */
+  savederror = APPLY_OK; /* stays in this value
+                            unless apply error
+                            occurs during the
+                            loop */
   for (x1 = x1min; x1 < x1max; x1++) {
-    *(restofcoord->x1) = *x1; /* move forward
-                                 along the line
-                                 to a new point
-                                 for the algo-
-                                 rithm */
-    switch (status = apply(expr, 
+    *(restofcoord->x1) = *x1;
+    switch (currerror = apply(expr, 
           *restofcoord, 
           &exprval)) {
       case APPLY_OK:
         if (fabs(exprval) < precision) {
-          /* precise enough root found.
-           * NOTE: 'applyerror' argument
-           * is not updated. */
-          *foundroot = *x1;
-          return SOLVED; /* ignore previous
-                            apply errors
-                            if a root was
-                            found */
+          /* precise enough root found */
+          return solutionresult(*x1);
         }
         break;
       default:
-        error = status; /* store found
-                           apply error */
+        savederror = currerror;
         break;
     }
   }
   /* No sufficiently precise
-   * root found. Just in case,
-   * 'throw' the apply error 
-   * that occured last in the
-   * loop. */
-  *applyerror = error; /* In the case of
-                          no apply error,
-                          this is just
-                          APPLY_OK */
-  return UNSOLVABLE;
+   * root found. */
+  switch (savederror) {
+    case APPLY_OK:
+      return othererrorresult(UNSOLVABLE);
+    default:
+      return applyerrorresult(savederror);
+  }
 }
