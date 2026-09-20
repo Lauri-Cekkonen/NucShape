@@ -3,8 +3,21 @@
 
 #include <math.h>
 
+#define MAXAMOUNTOFALIASES 3
+
 /* Possible tags for a Coordpoint
- * object. */
+ * object. The tag states which
+ * coordinate system the coordinate
+ * components of the object
+ * correspond to. 
+ *
+ * EXAMPLE: If a Coordpoint object 
+ * stores values 1.2 and 5.3
+ * corresponding to x- and y-components
+ * in two-dimensional cartesian
+ * coordinate system, then the 
+ * 'coordsystem' tag of the object
+ * is 'CART2D'. */
 enum coordsystem {
   CART1D, CART2D, CART3D, /* cartesian
                              coordinates */
@@ -12,6 +25,13 @@ enum coordsystem {
                        coordinates */
   POLAR, CYLIND /* polar and cylindrical
                    coordinates */
+};
+
+enum coordaliasstatus {
+  EVERY_ALIAS_UNVALID = 00,
+  ALIAS_1_VALID       = 01,
+  ALIAS_2_VALID       = 02,
+  ALIAS_3_VALID       = 04
 };
 
 /* Container type for the coordinate
@@ -56,9 +76,10 @@ enum coordsystem {
  * x3 */
 typedef struct {
   enum coordsystem tag;
-  double *x1;
-  double *x2;
-  double *x3;
+  struct {
+    enum coordaliasstatus flag;
+    double *aliases[MAXAMOUNTOFALIASES];
+  } coordaliases;
   union {
     struct {
       double x;
@@ -67,20 +88,27 @@ typedef struct {
       double z; /* not used for:
                    tag=CART2D
                    tag=CART1D */
-    } cartesian;
+    } cartesian; /* cartesian coordinates:
+                    tag=CART1D,
+                       =CART2D or
+                       =CART3D */
     struct {
       double r; /* not used for:
                    tag=UNITSPHER */
       double theta;
       double phi;
-    } spherical;
+    } spherical; /* spherical coordinates:
+                    tag=UNITSPHER or
+                       =SPHER */
     struct {
       double r;
       double theta;
       double z; /* not used for:
                    tag=POLAR */
-    } cylindrical;
-  } coordinates;
+    } cylindrical; /* cylindrical coordinates:
+                      tag=CYLIND or
+                         =POLAR */
+  } coordcomponents;
 } Coordpoint;
 
 /* Declarations for Coordpoint

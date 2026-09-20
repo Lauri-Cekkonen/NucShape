@@ -38,6 +38,8 @@ Coordpoint genunitspher(double theta,
   return point;
 }
 
+
+
 /* Example projection functions: */
 
 /* Update the double pointed to
