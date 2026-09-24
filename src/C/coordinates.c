@@ -1,6 +1,15 @@
 #include "coordinates.h"
 
-/* Example Coordpoint constructors: */
+/* Example Coordpoint constructors:
+ *
+ * NOTE: Consctructors of Coordpoint
+ * leave by design the 'enum
+ * coordaliasstatus' member of the
+ * constructed Coordpoint object as
+ * 'EVERY_ALIAS_INVALID'. Other
+ * a component and update the
+ * 'enum coordaliasstatus' member
+ * accordingly. */
 
 /* Initialize a Coordpoint object
  * corresponding to cartesian
@@ -9,15 +18,12 @@ Coordpoint gen3D(double x,
     double y, double z) 
 {
   Coordpoint p;
-  p.tag = CART3D;
-  p.coordinates.cartesian.x = x;
-  p.coordinates.cartesian.y = y;
-  p.coordinates.cartesian.z = z;
-  /* initialize pointers to null */
-  p.x1 = NULL;
-  p.x2 = NULL;
-  p.x3 = NULL;
-  return point;
+  p.tag = CARTESIAN_3D;
+  p.components.cartesian.x = x;
+  p.components.cartesian.y = y;
+  p.components.cartesian.z = z;
+  p.aliases.flag = EVERY_ALIAS_INVALID; 
+  return p;
 }
 
 /* Initialize a Coordpoint object
@@ -28,85 +34,75 @@ Coordpoint genunitspher(double theta,
     double phi) 
 {
   Coordpoint p;
-  p.tag = UNITSPHER;
-  p.coordinates.spherical.theta = theta;
-  p.coordinates.spherical.phi   = phi;
-  /* initialize pointers to null */
-  p.x1 = NULL;
-  p.x2 = NULL;
-  p.x3 = NULL;
-  return point;
+  p.tag = UNIT_SPHERICAL;
+  p.components.spherical.theta = theta;
+  p.components.spherical.phi   = phi;
+  p.aliases.flag = EVERY_ALIAS_INVALID;
+  return p;
 }
 
+/* Functions for accessing and
+ * modifying aliases of
+ * Coordpoint objects: */
 
-
-/* Example projection functions: */
-
-/* Update the double pointed to
- * by 'proj' to the x-coordinate
- * value of 'p' (side effect). 
- * If the coordinate system of
- * 'p' is not cartesian,
- * calculate the corresponding
- * x coordinate value in
- * cartesian coordinate 
- * system. */
-enum projectionstatus xval(
-    Coordpoint p,
-    double *proj)
+/* Make the 'i'th alias in the
+ * Coordpoint object pointed
+ * to by 'p' to point to the
+ * same location as 'ptr'. If
+ * this was successful,
+ *   'ALIAS_ACCESS_OK'
+ * is returned. Otherwise some
+ * other signal defined in
+ * 'aliasaccessed' is returned
+ * to signal a corresponding
+ * error. */
+enum aliasaccessed aliastoptr(
+    Coordpoint *p,
+    int i, /* between 1 and
+              MAXAMOUNTOFALIASES */
+    double const *ptr)
 {
-  switch (p.tag) {
-    case CART1D: case CART2D:
-    case CART3D:
-      *proj = p.coordinates.cartesian.x;
-      return PROJECTION_OK;
-    case UNITSPHER:
-      *proj = sin(p.coordinates.spherical.theta)*
-              cos(p.coordinates.spherical.phi);
-      return PROJECTION_OK;
-    case UNITSPHER:
-      *proj = p.coordinates.spherical.r*
-          sin(p.coordinates.spherical.theta)*
-          cos(p.coordinates.spherical.phi);
-      return PROJECTION_OK;
-    case POLAR: case CYLIND:
-      *proj = p.coordinates.cylindrical.r*
-          cos(p.coordinates.cylindrical.theta);
-      return PROJECTION_OK;
-    default:
-      /* This function is outdated
-       * and does not include
-       * the tag of p as non-default
-       * case */
-      return UNKNOWN_TAG;
-  }
+  enum coordaliasstatus signal;
+
+  /* check for errors: */
+  if (_aliasflagisconsistent() == 0)
+    return COORDINATES_H_INCONSISTENT;
+  if ((signal = _aliassignal(i)) == EVERY_ALIAS_INVALID)
+    return ALIAS_INDEX_OUT_OF_BOUNDS;
+  /* update aliases of p: */
+  p->aliases.aliasarr[i-1] = ptr;
+  p->aliases.flag |= signal;
+  return ALIAS_ACCESS_OK;
 }
 
-/* Set 'proj' to point to
- * the x-coordinate value
- * of Coordpoint 'p'. This
- * requires 'p' to be in
- * cartesian coordinate
- * system. */
-enum projectionstatus xptr(
-    Coordpoint p,
-    double *proj)
+/* Make 'returnptr' pointer
+ * point at same location
+ * as the 'i'th alias of the
+ * Coordpoint object pointed
+ * to by 'p'. If this was 
+ * successful,
+ *   'ALIAS_ACCESS_OK'
+ * is returned. Otherwise some
+ * other signal defined in
+ * 'aliasaccessed' is returned
+ * to signal a corresponding
+ * error. */
+enum aliasaccessed getalias(
+    Coordpoint *p,
+    int i, /* between 1 and
+              MAXAMOUNTOFALIASES */
+    double *returnptr)
 {
-  switch (p.tag) {
-    case CART1D: case CART2D:
-    case CART3D:
-      proj = &p.coordinates.cartesian.x;
-      return PROJECTION_OK;
-    case UNITSPHER: case SPHER:
-    case POLAR: case CYLIND:
-      /* coordinate system not
-       * cartesian */
-      return WRONG_COORD_SYSTEM;
-    default:
-      /* This function is outdated
-       * and does not include
-       * the tag of p as non-default
-       * case */
-      return UNKNOWN_TAG;
-  }
+  enum coordaliasstatus signal;
+
+  /* check for errors: */
+  if (_aliasflagisconsistent() == 0)
+    return COORDINATES_H_INCONSISTENT;
+  if ((signal = _aliassignal(i)) == EVERY_ALIAS_INVALID)
+    return ALIAS_INDEX_OUT_OF_BOUNDS;
+  if ((p->aliases.flag & signal) == 0)
+    return REQUESTED_ALIAS_INVALID;
+  /* proceed without errors: */
+  returnptr = p->aliases.aliasarr[i-1];
+  return ALIAS_ACCESS_OK;
 }
